@@ -1,43 +1,48 @@
-import multiprocessing as mp
+import multiprocessing
+from multiprocessing import Process, Queue # multiprocessing.Manager.Queue
 import time
 
-a, b, c = [], [], []
+class Citizen(Process):
+    def __init__(self, queue, people, v):
+        Process.__init__(self)
+        self.queue = queue
+        self.people = people
+        self.v = v
 
-def app1(m):
-    for i in m:
-        a.append(i)
+    def pay(self, people, v):
+        for i in range(v):
+            people.append(v)
+        return people
 
-def app2(m):
-    for i in m:
-        b.append(i)
+    def run(self):
+        temp = self.pay(self.people, self.v)
+        self.queue.put(temp)
 
-def app3(m):
-    for i in m:
-        c.append(i)
 
 
 if __name__ == '__main__':
-    numbs = list(range(8_000_000))
+    citizens, res = [], []
+    queue = Queue()
+    people, proc, v = [], 4, 10_000_000
 
     st = time.time()
-    app1(numbs)
-    app2(numbs)
-    app3(numbs)
-    nd = time.time()
 
-    print(f"serial time: {nd - st}")
+    for _ in range(proc):
+        citizens.append(Citizen(queue, people, v))
+    for i in citizens:
+        i.start()
+
+    while proc:
+        res += queue.get()
+        print(len(res))
+        proc -= 1
     
-    p1 = mp.Process(target = app1, args=(numbs,))
-    p2 = mp.Process(target = app2, args=(numbs,))
-    P3 = mp.Process(target = app3, args=(numbs,))
-
-    st = time.time()
-    p1.start()
-    p2.start()
-    P3.start()
     nd = time.time()
 
-    print(f"parallel time: {nd - st}")
+    print(f"Time: {nd - st}")
 
-    print(len(a), len(b), len(c))
+
+
+
+
 
